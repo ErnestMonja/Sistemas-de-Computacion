@@ -6,4 +6,6 @@ De acuerdo a la bibliografia presentada en esta asignatura, se define al rendimi
 En esta sección del Trabajo Práctico 1, se busco estudiar de forma empírica esta relación, utilizando como base la placa ESP32 la cual tiene la ventaja de que esta permite ajustar su frecuencia de trabajo de su CPU. Para ello, se ejecutó un código el cual compara la velocidad de ejecución de un código a medida que se modifica la frecuencia de trabajo del CPU.
 
 ## 2- Análisis Empírico
-Dado que no poseemos una ESP32, se opto por usar un simulador online el cual se llama [Wokwi](https://wokwi.com/projects/new/esp32-s2)
+Dado que no se tuvo poseción de una ESP32, se optó por usar un simulador online llamado [Wokwi](https://wokwi.com/projects/new/esp32-s2), el cual permite introducir un código en $C/C++$ y lo compiló en una instancia virtual de este microcontrolador, la cual a fines prácticos de nuestro análisis de rendimiento será suficiente.
+
+Para realizar tal medición y análisis, se diseño un código en $C$
