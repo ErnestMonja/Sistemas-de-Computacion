@@ -18,11 +18,11 @@ Una vez explicado el funcionamiento de este código, se procedió a la ejecució
 
 | Frecuencia (MHz) | Tiempo enteros (ms) | Tiempo float (ms) |
 | ---------------- | ------------------- | ----------------- |
-|        2         |        2828         |       31891       |
-|        4         |        1435         |       16034       |
-|        8         |        1076         |       11996       |
+| 2                | 2828                | 31891             |
+| 4                | 1435                | 16034             |
+| 8                | 1076                | 11996             |
 
-![Resultados del test]()
+![Resultados del test](https://github.com/ErnestMonja/Sistemas-de-Computacion/blob/main/TP1%20-%20Rendimiento/ESP32%20Test/ESP32%20-%20Test%20Results.png)
 ---
 
 
