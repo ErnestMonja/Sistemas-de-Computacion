@@ -35,12 +35,14 @@ hint: See PEP 668 for the detailed specification.
 ### Solución 
 
 Crear y  activar el entorno   
-1. Creación del entorno: ´python3 -m venv venv´
-2. Activar el entorno: ´source venv/bin/activate´ 
+1. Creación del entorno: `python3 -m venv venv`
+2. Activar el entorno: `source venv/bin/activate` 
 
 
 ### Instalación de las herramientas 
 
-Utilicé los siguientes comandos: ´pip install gprof2dot´ y ´sudo apt install graph´
+Utilicé los siguientes comandos: 
+  `pip install gprof2dot` 
+  `sudo apt install graph`
 
 
