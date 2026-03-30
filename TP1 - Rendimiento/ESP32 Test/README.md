@@ -1,12 +1,13 @@
 # Informe de Análisis de Rendimiento variando la Frecuencia de CPU en una ESP32 utilizando Simulación en Wokwi.
 
+---
 
 ## 1- Introducción al Rendimiento
 De acuerdo a la bibliografía presentada en esta asignatura, se define al rendimiento de un sistema como la capacidad que tiene dicho sistema para realizar un trabajo en un determinado tiempo. Es inversamente proporcional al tiempo, es decir, cuanto mayor sea el tiempo que necesite, menor será el rendimiento. Se tiene entonces que en base a esta definición, es de esperarse que al aumentar la frecuencia de trabajo de nuestro `CPU`, se pueden entonces ejecutar una mayor cantidad de instrucciones por unidad de tiempo, es decir y en términos más simplistas: los programas se ejecutarán más rápidos.
 
 En esta sección del Trabajo Práctico 1, se buscó estudiar de forma empírica esta relación, utilizando como base la placa `ESP32` la cual tiene la ventaja de que permite ajustar la frecuencia de trabajo de su `CPU`. Para ello, se ejecutó un código el cual compara la velocidad de ejecución de un código a medida que se modifica la frecuencia de trabajo del `CPU`.
 
-
+---
 
 ## 2- Análisis Empírico
 ### 2.1 - Realización de la Prueba
@@ -16,7 +17,7 @@ Para realizar tal medición y análisis, se diseñó un código en `C` el cual r
 
 En este código se llama a la función `ejecutarPrueba()` la cual toma como parámetro la frecuencia de la `CPU` a la cual se debe realizar el test. Internamente esta función llama a otras dos funciones llamadas `testEnteros()` y `testFloats()` las cuales ejecutan un ciclo `for()` con sumas de `500000` iteraciones.
 
-
+---
 
 ### 2.2- Obtención de los Resultados
 Una vez explicado el funcionamiento de este código, se procedió a la ejecución del mismo donde se obtuvieron los siguientes valores: 
@@ -32,7 +33,7 @@ Una vez explicado el funcionamiento de este código, se procedió a la ejecució
 
 > Nótese que las frecuencias de trabajo del `CPU` utilizadas, son comparativamente bajas a las que suele trabajar la `CPU` normalmente, esto se debió a que [Wokwi](https://wokwi.com/projects/new/esp32-s3) internamente limita la frecuencia de trabajo del `CPU` a `8 [MHz]` por defecto, de modo que si las frecuencias se aumentan (por ejemplo en 1 orden de magnitud), tales cambios no se reflejan en la simulación y los tiempos de ejecución serán todos iguales. Esto se puede confirmar consultando la documentación del simulador en: [ESP32 CPU frequency limit](https://docs.wokwi.com/guides/esp32#cpu-frequency-limit)
 
-
+---
 
 ### 2.3- Análisis del Tiempo total
 Se propone analizar primeramente, cómo varía el tiempo de ejecución en función de la frecuencia de la `CPU` de la `ESP32` al ejecutar tanto las operaciones de números enteros como de números flotantes, ya que nos permitirá realizar una conclusión interesante. Veamos entonces, cómo podemos relacionar las frecuencias de trabajo de la `CPU` de acuerdo a los tiempos totales de ejecución del código, tomando como referencia la frecuencia de trabajo más alta.
@@ -56,7 +57,7 @@ $$
 
 Esto nos quiere decir que para un mismo número de iteraciones y a la misma frecuencia de trabajo del `CPU`, influye seriamente el `CPI` que debe realizarse dentro de cada bucle de repetición como lo es en este caso. 
 
-
+---
 
 ### 2.4- Análisis del Tiempo de ejecución por operación
 En el análisis precedente, se realizaron las relaciones tomando el tiempo total de operaciones, es decir el que considera los tiempos tanto de las operaciones con números enteros como con números con punto flotante. Sin embargo, se observa que si comparamos estrictamente los tiempos de ejecución de operaciones del mismo tipo, se pueden observar relaciones tales como:
@@ -91,7 +92,7 @@ Nótese aquí que han ocurrido dos cosas fundamentales:
 
 Se observa entonces que la inecuación alcanzada en el apartado anterior, es una consecuencia directa de comparar tiempos de ejecución de 2 operaciones con distinta cantidad de Ciclos por Instrucción, ya que al analizar por partes los resultados, se llega a una relación más directa donde $T_{prog} \ \propto \frac{1}{f_{CPU}}$ la cual es únicamente válida para comparación entre el mismo tipo de instrucciones.
 
-
+---
 
 ## 3- Conclusión
 Se concluye entonces que a lo largo de esta sección del Trabajo Práctico N°1, se han podido simular los tiempos de ejecución de un simple código compuesto por sumas de enteros y flotantes y se demostró que los tiempos de ejecución no solamente dependen de la frecuencia de trabajo del `CPU`, sino que también son afectados tanto por el número de instrucciones como de la cantidad de ciclos necesarios que demora una instrucción, y esta última a su vez depende del tipo de operación que se esté realizando.
