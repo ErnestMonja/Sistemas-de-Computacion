@@ -125,9 +125,9 @@ No solo importa cuántos núcleos tiene un procesador, sino qué tan bien logra 
 
   | Procesador | Rendimiento | Costo | Resultado |
 |-----------|--------|----------------|--------------|
-| Intel Core i5-13600K | $\frac{1}{72} = 0.0139$ | $320 | $\frac{0.0139}{320} = 4.34e-5$ |
-| AMD Ryzen 9 5900X | $\frac{1}{76} = 0.01316$ | $350 | $\frac{0.01316}{350} = 3.76e-5$ |
-| AMD Ryzen 9 7950X | $\frac{1}{50} = 0.02$ | $512 | $\frac{0.02}{512} = 3.9e-5$ |
+| Intel Core i5-13600K | $\frac{1}{72} = 0.0139$ | $320 | $\frac{0.0139}{320} = 4.34x10^(-5)$ |
+| AMD Ryzen 9 5900X | $\frac{1}{76} = 0.01316$ | $350 | $\frac{0.01316}{350} = 3.76x10^(-5)$ |
+| AMD Ryzen 9 7950X | $\frac{1}{50} = 0.02$ | $512 | $\frac{0.02}{512} = 3.9x10^(-5)$ |
 
 Mientras más alto sea el resultado, mejor es el procesador en relación calidad-precio. En este caso, el procesador Intel Core i5-13600K es quien tiene mejor relación, sin embargo, si se busca más poder de procesamiento total, se debe optar por el AMD Ryzen 9 7950X.
 
@@ -137,8 +137,8 @@ Mientras más alto sea el resultado, mejor es el procesador en relación calidad
 
   | Procesador | Rendimiento | Potencia consumida [W] | Resultado |
 |-----------|--------|----------------|--------------|
-| Intel Core i5-13600K | $0.0139$ | 125 | $\frac{0.0139}{125} = 1.112e-4$ |
-| AMD Ryzen 9 5900X | $0.01316$ | 105 | $\frac{0.01316}{105} = 1.253e-4$ |
-| AMD Ryzen 9 7950X | $0.02$ | 170 | $\frac{0.02}{170} = 1.176e-5$ |
+| Intel Core i5-13600K | $0.0139$ | 125 | $\frac{0.0139}{125} = 1.112x10^(-4)$ |
+| AMD Ryzen 9 5900X | $0.01316$ | 105 | $\frac{0.01316}{105} = 1.253x10^(-4)$ |
+| AMD Ryzen 9 7950X | $0.02$ | 170 | $\frac{0.02}{170} = 1.176x10^(-4)$ |
 
 Debido a su baja potencia de consumo, el procesador AMD es quien tiene mejor relación, sin embargo, si se busca más poder de procesamiento total, se debe optar por el AMD Ryzen 9 7950X.
