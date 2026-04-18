@@ -60,7 +60,7 @@ for registro in argentina:
     valor_float = float(registro["value"])
     
     # Llamada a la capa intermedia en C
-    resultado_c = lib.calcular_gini(valor_float)
+    resultado_c = lib.procesar_valor(valor_float)
     
     print(f"{anio:^10} | {valor_float:^20.2f} | {resultado_c:^20}")
 
