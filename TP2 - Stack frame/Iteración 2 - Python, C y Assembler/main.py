@@ -6,13 +6,14 @@ import sys
 # 1. Configuración de la librería C
 # Usamos os.path.abspath para evitar errores de "file not found"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-SO_PATH = os.path.join(BASE_DIR, "libgini.so")
+SO_PATH = os.path.join(BASE_DIR, "libcalculo.so")
+
 
 try:
     lib = ctypes.CDLL(SO_PATH)
     # Definimos el "contrato" con la función de C
-    lib.calcular_gini.argtypes = [ctypes.c_double]
-    lib.calcular_gini.restype = ctypes.c_long
+    lib.sumar_uno.argtypes = [ctypes.c_int]
+    lib.sumar_uno.restype = ctypes.c_int
 except OSError as e:
     print(f"[ERROR] No se pudo cargar la librería en {SO_PATH}: {e}")
     sys.exit(1)
@@ -58,11 +59,12 @@ print("─" * 60)
 for registro in argentina:
     anio = registro["date"]
     valor_float = float(registro["value"])
+    valor_entero = int(valor_float)
+    resultado_asm = lib.sumar_uno(valor_entero)
+
+   
     
-    # Llamada a la capa intermedia en C
-    resultado_c = lib.procesar_valor(valor_float)
-    
-    print(f"{anio:^10} | {valor_float:^20.2f} | {resultado_c:^20}")
+    print(f"{anio:^10} | {valor_float:^20.2f} | {resultado_asm:^20}")
 
 print("═" * 60)
 print("[Python] Proceso finalizado con éxito.\n")

@@ -1,0 +1,14 @@
+# Binarios y objetos de C/Assembler
+*.o
+*.so
+programa_test
+libcalculo.so
+
+# Temporales de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
