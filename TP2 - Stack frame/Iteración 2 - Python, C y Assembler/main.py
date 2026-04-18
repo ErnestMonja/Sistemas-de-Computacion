@@ -18,7 +18,7 @@ except OSError as e:
     sys.exit(1)
 
 # 2. Consumo de la API del Banco Mundial
-# Traemos datos de todos los países para luego filtrar (como el código de tus amigos)
+# Traemos datos de todos los países para luego filtrar de acuerdo al pais deseado.
 URL = (
     "https://api.worldbank.org/v2/en/country/all/indicator/SI.POV.GINI"
     "?format=json&date=2011:2020&per_page=32500&page=1"
