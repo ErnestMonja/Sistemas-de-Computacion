@@ -12,8 +12,8 @@ SO_PATH = os.path.join(BASE_DIR, "libcalculo.so")
 try:
     lib = ctypes.CDLL(SO_PATH)
     # Definimos el "contrato" con la función de C
-    lib.sumar_uno.argtypes = [ctypes.c_int]
-    lib.sumar_uno.restype = ctypes.c_int
+    lib.procesar_valor.argtypes = [ctypes.c_double]
+    lib.procesar_valor.restype = ctypes.c_long
 except OSError as e:
     print(f"[ERROR] No se pudo cargar la librería en {SO_PATH}: {e}")
     sys.exit(1)
@@ -60,8 +60,7 @@ for registro in argentina:
     anio = registro["date"]
     valor_float = float(registro["value"])
     valor_entero = int(valor_float)
-    resultado_asm = lib.sumar_uno(valor_entero)
-
+    resultado_asm = lib.procesar_valor(valor_float)
    
     
     print(f"{anio:^10} | {valor_float:^20.2f} | {resultado_asm:^20}")
