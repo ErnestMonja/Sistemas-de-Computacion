@@ -53,4 +53,4 @@ Para validar que el stack frame y el paso de parámetros funcionan correctamente
 
 El sistema ahora procesa la lógica aritmética en el nivel más bajo posible, garantizando una mayor eficiencia y demostrando la capacidad de integrar distintos lenguajes mediante el uso correcto de interfaces ABI.
 
-![](Iteración%202%20-%20Python,%20C%20y%20Assembler/Tabla_Resultado_FInal.png)
+![](Iteración%202%20-%20Python,%20C%20y%20Assembler/Tabla_Resultado_Final.png)
