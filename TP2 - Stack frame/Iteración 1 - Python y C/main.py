@@ -4,13 +4,14 @@ import os
 import sys
 
 # 1. Configuración de la librería C
-# Usamos os.path.abspath para evitar errores de "file not found"
+# Usamos os.path.abspath que busca en la misma dirección donde esta este script. Para evitar errores de "file not found"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Construye la ruta a la librería compartida "libgini.so".
 SO_PATH = os.path.join(BASE_DIR, "libgini.so")
 
 try:
     lib = ctypes.CDLL(SO_PATH)
-    # Definimos el "contrato" con la función de C
+    # Definimos el "contrato" con la función de C. El tipo de entrada y salida.
     lib.calcular_gini.argtypes = [ctypes.c_double]
     lib.calcular_gini.restype = ctypes.c_long
 except OSError as e:
@@ -26,8 +27,11 @@ URL = (
 
 print("\n[Python] Consultando API del Banco Mundial...")
 try:
+    # Hace la request y evita quedarse colgado con el timeout.
     response = requests.get(URL, timeout=15)
+    # Si el servidor devuelve error (404, 500), lanza excepción
     response.raise_for_status()
+    # Convierte la respuesta JSON a estructura Python
     data = response.json()
 except requests.RequestException as e:
     print(f"[ERROR] Falló la conexión con la API: {e}")
