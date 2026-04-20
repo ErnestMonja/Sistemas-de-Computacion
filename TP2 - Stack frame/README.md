@@ -38,6 +38,18 @@ Ahora el flujo de control se optimizó para separar la gestión de tipos de la l
 2.  **Capa Intermedia (C):** Recibe el `double` de Python, realiza el casting a `long` (eliminando decimales) y delega el cálculo a la capa inferior.
 3.  **Capa Inferior (Ensamblador):** Realiza la operación aritmética elemental (`n + 1`) utilizando registros directamente.
 
+### Flujo de Proceso
+
+1. **Python** solicita los datos a la API Rest.
+2. **Python** filtra y limpia los datos.
+3. **Python** invoca la función `procesar_valor` de la librería `libcalculo.so`.
+4. **C** recibe el valor, lo convierte a long y llama a la rutina de **Assembler**.
+5. **Assembler** crea el Stack Frame, suma 1 y devuelve el resultado en el registro `%rax`
+
+A continuación se muestra una imagen de la creación del Stack Frame en el código de Assembler `Calculo.s`
+
+![](Iteración%202%20-%20Python,%20C%20y%20Assembler/Capturas-GDB/Creacion_stackframe.png)
+
 ### Verificación con GDB
 
 Para validar que el stack frame y el paso de parámetros funcionan correctamente, realizamos el seguimiento con `gdb`.
@@ -47,7 +59,7 @@ Para validar que el stack frame y el paso de parámetros funcionan correctamente
 - Análisis de Stack: Para verificar cómo se guardaba el rbp del llamador y la dirección de retorno antes de ejecutar el prólogo de la función.
 
 
-![](Iteración%202%20-%20Python,%20C%20y%20Assembler/Capturas-GDB/Screenshot%20From%202026-04-18%2017-26-49.png)
+![](Iteración%202%20-%20Python,%20C%20y%20Assembler/Capturas-GDB/Resultado.png)
 
 ### Resultado
 
