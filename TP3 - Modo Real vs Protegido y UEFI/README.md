@@ -13,15 +13,14 @@ Se propone analizar en detalle lo que realiza cada parte de este comando:
 * `\125\252` son números en octal, los cuales pasados a hexadecimal son iguales a: `0x55` y `0xAA` respectivamente. Estos números son requisito para que la imagen sea interpretada como una `MBR`.
 * `> main.img` guarda toda la operación realizada en el archivo `main.img`.
 
-
-Se propone entonces obtener la codificacion hexadecimal de una instruccion, en este caso se trata de la instrucción `HLT` mediante la escritura, ensamblaje y desamblaje de una instrucción en Assembler, con las siguientes líneas de código:
+Se propone entonces obtener la codificacion hexadecimal de una instrucción, en este caso se trata de la instrucción `HLT` mediante la escritura, ensamblaje y desensamblaje de una instrucción en Assembler, con las siguientes líneas de código:
 ```bash
 echo hlt > a.S
 as -o a.o a.S
 objdump -S a.o
 ```
 
-El resultado de compilación de estas líneas es el de la siguiente figura:
+El resultado de compilación de estas líneas, es el que se muestra en la siguiente figura:
 
 ![Creación de la Imagen Booteable](https://github.com/ErnestMonja/Sistemas-de-Computacion/blob/main/TP3%20-%20Modo%20Real%20vs%20Protegido%20y%20UEFI/Imagen%20Booteable/1-%20Creaci%C3%B3n%20de%20la%20Imagen%20Booteable.png)
 
@@ -34,7 +33,7 @@ sudo apt install qemu-system-x86
 qemu-system-x86_64 --drive file=main.img,format=raw,index=0,media=disk
 ```
 
-Estos comandos efectivamnete instalan QEMU y lo inicializan con la imagen booteable creada tal como muestra la siguiente figura:
+Estos comandos efectivamente instalan QEMU y lo inicializan con la imagen booteable creada, tal como muestra la siguiente figura:
 
 ![Instalación de QEMU](https://github.com/ErnestMonja/Sistemas-de-Computacion/blob/main/TP3%20-%20Modo%20Real%20vs%20Protegido%20y%20UEFI/Imagen%20Booteable/2-%20Instalaci%C3%B3n%20de%20QEMU.png)
 
@@ -44,7 +43,15 @@ Se propone entonces grabar tal imagen dentro de un pendrive y bootear el hardwar
 sudo dd if=main.img of=/dev/sdX
 ```
 
-El comando `dd` o Data Duplicator copia datos a bajo nivel, bit por bit, ignorando sistemas de archivos (como FAT32 o NTFS).
+El comando `dd` o Data Duplicator copia datos a bajo nivel, bit por bit, ignorando sistemas de archivos (como FAT32 o NTFS) desde la imagen creada hasta un pendrive. Nótese que de utilizar `sda` (que suele ser el disco principal), se podría borrar accidentalmente el sistema operativo. Por lo tanto, se debe verificar con el comando `lsblk`, qué letra tiene el pendrive utilizado.
+
+La implementa
+
+La salida en consola de estos comandos es la que se muestra a continuación:
+
+![]()
+
+Si
 
 
 
@@ -102,7 +109,7 @@ Dadas estas ventajas, se tiene que la implementación del Coreboot es muy común
 
 
 
-## 3-
+## 3- Linker y GBD
 
 
 
