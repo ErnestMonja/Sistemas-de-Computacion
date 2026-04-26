@@ -1,7 +1,6 @@
 # TP#3: Modo Real vs Modo Protegido
 
 ## 1- Imagen Booteable
-### 1.1- Creación de una Imagen Booteable
 Una imagen booteable (o de arranque) es un tipo de imagen de disco que, al estar en un dispositivo de arranque, permite que la computadora asociada arranque sin necesidad de un sistema operativo previo. En la arquitectura x86, lo más simple es crear un sector de arranque MBR y colocarlo en un disco. Para ello, se puede crear un sector de arranque con una sola línea de printf:
 
 ```bash
@@ -22,17 +21,30 @@ as -o a.o a.S
 objdump -S a.o
 ```
 
-El resultado de compilación de estas líneas es el siguiente:
-![]()
+El resultado de compilación de estas líneas es el de la siguiente figura:
 
+![Creación de la Imagen Booteable](https://github.com/ErnestMonja/Sistemas-de-Computacion/blob/main/TP3%20-%20Modo%20Real%20vs%20Protegido%20y%20UEFI/Imagen%20Booteable/1-%20Creaci%C3%B3n%20de%20la%20Imagen%20Booteable.png)
 
+Se observa aquí que la instrucción `HLT` se corresponde efectivamente con el número hexadecimal `0X4F`.
 
+Continuando este análisis de la imagen booteable, se tiene que para ejecutar la imagen se propuso instalar QEMU, siendo este un emulador de procesadores basado en la traducción dinámica de binarios (conversión del código binario de la arquitectura fuente en código entendible por la arquitectura huésped). Para ello se ejecutaron las siguientes lineas de código:
 
+```bash
+sudo apt install qemu-system-x86
+qemu-system-x86_64 --drive file=main.img,format=raw,index=0,media=disk
+```
 
+Estos comandos efectivamnete instalan QEMU y lo inicializan con la imagen booteable creada tal como muestra la siguiente figura:
 
+![Instalación de QEMU](https://github.com/ErnestMonja/Sistemas-de-Computacion/blob/main/TP3%20-%20Modo%20Real%20vs%20Protegido%20y%20UEFI/Imagen%20Booteable/2-%20Instalaci%C3%B3n%20de%20QEMU.png)
 
+Se propone entonces grabar tal imagen dentro de un pendrive y bootear el hardware de acuerdo a la siguiente línea:
 
+```bash
+sudo dd if=main.img of=/dev/sdX
+```
 
+El comando `dd` o Data Duplicator copia datos a bajo nivel, bit por bit, ignorando sistemas de archivos (como FAT32 o NTFS).
 
 
 
@@ -125,6 +137,7 @@ Dadas estas ventajas, se tiene que la implementación del Coreboot es muy común
 
 ## Bibliografía
 * [Imagen Booteable](https://en.wikipedia.org/wiki/Boot_image)
+* [QEMU](https://es.wikipedia.org/wiki/QEMU)
 * [LoJaX](https://es.wikipedia.org/wiki/LoJax)
 * [BlackLotus](https://github.com/ldpreload/BlackLotus)
 * [Buffer Overflow](https://www.cloudflare.com/es-es/learning/security/threats/buffer-overflow/)
