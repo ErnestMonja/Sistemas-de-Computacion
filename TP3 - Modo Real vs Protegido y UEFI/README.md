@@ -236,95 +236,110 @@ Como bien indica el título de esta sección, el objetivo de la misma consiste e
 Con estos aspectos en mente, se propone utilzar el siguiente código:
 
 ```asm
-; =============================================================================
-; DESAFÍO: PASO A MODO PROTEGIDO (x86)
-; Compilar con: nasm -f bin boot.asm -o boot.bin
-; Ejecutar con: qemu-system-x86_64 boot.bin
-; =============================================================================
+# =============================================================================
+# DESAFÍO FINAL: MODO PROTEGIDO (Sintaxis AT&T)
+# Compilar con: 
+#   as --32 boot.s -o boot.o
+#   ld -m elf_i386 -Ttext 0x7c00 --oformat binary boot.o -o boot.bin
+# =============================================================================
 
-[bits 16]           ; Empezamos en modo real (16 bits)
-[org 0x7c00]        ; Dirección de carga estándar del BIOS
+.code16
+.global _start
 
-start:
-    cli             ; Deshabilitar interrupciones
-    xor ax, ax      ; Limpiar registros de segmento
-    mov ds, ax
-    mov es, ax
-    mov ss, ax
-    mov sp, 0x7c00  ; Definir el stack abajo del bootloader
+_start:
+    cli                         # 1. Deshabilitar interrupciones
+    
+    # Limpiamos registros de segmento
+    xor %ax, %ax
+    mov %ax, %ds
+    mov %ax, %es
+    mov %ax, %ss
+    mov $0x7c00, %sp            # Stack justo antes del bootloader
 
-    ; 1. Cargar la GDT
-    lgdt [gdt_descriptor]
+    # 2. Cargar la GDT
+    # Usamos la dirección absoluta (0x7c00 + offset) para que lgdt la encuentre
+    lgdt gdt_descriptor
 
-    ; 2. Activar Modo Protegido en CR0
-    mov eax, cr0
-    or eax, 0x1
-    mov cr0, eax
+    # 3. Activar bit PE en CR0
+    mov %cr0, %eax
+    or $0x1, %eax
+    mov %eax, %cr0
 
-    ; 3. Salto lejano (Far JMP) para limpiar el pipeline y cargar CS
-    ; 0x08 es el offset del descriptor de código en la GDT
-    jmp 0x08:init_pm
+    # 4. Salto lejano (Far JMP) para pasar a 32 bits y cargar CS
+    # En AT&T la sintaxis es: ljmp $selector, $offset
+    ljmp $CODE_SEG, $protected_mode
 
-[bits 32]           ; Ya estamos en 32 bits
-init_pm:
-    ; 4. Cargar los selectores de datos (0x10 es el offset en la GDT)
-    mov ax, 0x10
-    mov ds, ax
-    mov ss, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
-
-    ; --- PRUEBA DE ESCRITURA ---
-    ; Como definimos que el segmento de datos empieza en 0x10000 (ver GDT),
-    ; escribir en [0x0] aquí escribirá realmente en la dirección física 0x10000.
-    mov byte [0x0], 'H'
-    mov byte [0x1], 'I'
-
-    ; Bucle infinito
-    jmp $
-
-; -----------------------------------------------------------------------------
-; ESTRUCTURA DE LA GDT (Global Descriptor Table)
-; -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# GDT (Global Descriptor Table)
+# -----------------------------------------------------------------------------
+.align 8
 gdt_start:
-    ; Descriptor Nulo (8 bytes de ceros)
-    dd 0x0, 0x0
+    # Descriptor 0: Nulo
+    .long 0x00000000
+    .long 0x00000000
 
-    ; Descriptor de Código (Selector 0x08)
-    ; Base: 0x00000000, Límite: 0xFFFFF (4GB con granularidad de 4KB)
-    ; Tipo: Ejecutable, lectura, ring 0
-    dw 0xffff       ; Límite (bits 0-15)
-    dw 0x0000       ; Base (bits 0-15)
-    db 0x00         ; Base (bits 16-23)
-    db 10011010b    ; Access byte (Presente, Ring 0, Código, Exec/Read)
-    db 11001111b    ; Flags (Granularidad 4KB, 32-bit) + Límite (16-19)
-    db 0x00         ; Base (bits 24-31)
+    # Descriptor 1: Código (Selector 0x08)
+    # Base: 0x00000000, Límite: 0xFFFFF
+    .word 0xFFFF        # limite 0:15
+    .word 0x0000        # base 0:15
+    .byte 0x00          # base 16:23
+    .byte 0x9A          # acceso: codigo, ring 0, ejecutable/lectura
+    .byte 0xCF          # flags: 32 bits, granularidad 4KB
+    .byte 0x00          # base 24:31
 
-    ; Descriptor de Datos (Selector 0x10)
-    ; Base: 0x00010000 (ESPACIO DIFERENCIADO), Límite: 0xFFFFF
-    ; Tipo: Datos, Lectura/Escritura, ring 0
-    dw 0xffff       
-    dw 0x0000       ; Base (bits 0-15) -> 0x0000
-    db 0x01         ; Base (bits 16-23) -> 0x01 (Esto hace que empiece en 0x10000)
-    db 10010010b    ; Access byte (Presente, Ring 0, Datos, Read/Write)
-    db 11001111b    
-    db 0x00         
-
+    # Descriptor 2: Datos (Selector 0x10)
+    # CONFIGURACIÓN: Base diferenciada en 0x00020000 para cumplir la consigna
+    .word 0xFFFF        
+    .word 0x0000        # base 0:15
+    .byte 0x02          # base 16:23 (Aquí definimos que empieza en 0x20000)
+    .byte 0x92          # acceso: datos, ring 0, lectura/escritura
+    .byte 0xCF          
+    .byte 0x00          
 gdt_end:
 
 gdt_descriptor:
-    dw gdt_end - gdt_start - 1 ; Tamaño de la GDT
-    dd gdt_start               ; Dirección de inicio
+    .word gdt_end - gdt_start - 1   # tamaño
+    .long gdt_start                  # dirección
 
-; Relleno para completar los 512 bytes del sector
-times 510-($-$$) db 0
-dw 0xaa55           ; Firma de arranque mágica
+.equ CODE_SEG, 8
+.equ DATA_SEG, 16
+
+# -----------------------------------------------------------------------------
+# MODO PROTEGIDO (32 bits)
+# -----------------------------------------------------------------------------
+.code32
+protected_mode:
+    # 5. Cargar registros de segmento de datos
+    mov $DATA_SEG, %ax
+    mov %ax, %ds
+    mov %ax, %es
+    mov %ax, %fs
+    mov %ax, %gs
+    mov %ax, %ss
+
+    # --- PRUEBA DE ESCRITURA ---
+    # Intentamos escribir en el inicio del segmento de datos.
+    # Como la Base es 0x20000, esto escribirá en la RAM física 0x20000.
+    movb $'O', (0x0)
+    movb $'K', (0x1)
+
+    # Si querés escribir en pantalla VGA (que está en 0xB8000), 
+    # recordá que ahora el cálculo es: Dirección Física - Base del Segmento.
+    # Como tu base es 0x20000, para llegar a 0xB8000 deberías usar offset 0x98000.
+
+    jmp .
+
+# Relleno para llegar a los 510 bytes y firma de arranque
+.fill 510 - (. - _start), 1, 0
+.word 0xAA55
 ```
 
+Para ensamblar este código, se propone utilizar las siguientes lineas de código
 
-
-
+```bash
+as --32 boot.s -o boot.o
+ld -m elf_i386 -Ttext 0x7c00 --oformat binary boot.o -o boot.bin
+```
 
 
 
