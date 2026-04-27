@@ -349,10 +349,24 @@ Se observa entonces la siguiente salida al ejecutar este código:
 
 ![Compilación](https://github.com/ErnestMonja/Sistemas-de-Computacion/blob/main/TP3%20-%20Modo%20Real%20vs%20Protegido%20y%20UEFI/Modo%20Protegido/Compilaci%C3%B3n.png)
 
-### 4.2- ¿Qué sucede si el segmento de datos es "Solo Lectura" e intentas escribir?
-Si se cambia el bit de acceso del descriptor de datos (específicamente el bit 1 del byte de acceso) de 1 (Read/Write) a 0 (Read-Only), se tiene que el hardware de la `CPU` detecta una violación de permisos al intentar ejecutar una instrucción `MOV` de escritura y por lo tanto se dispara una General Protection Fault (Excepción 13).
+### 4.2- Cambio de los Bits de Acceso del Segmento de datos a solo lectura: Depuración con GDB
+Si se cambia el bit de acceso del descriptor de datos (específicamente el bit 1 del byte de acceso) de 1 (Read/Write) a 0 (Read-Only), se tiene que el hardware de la `CPU` detecta una violación de permisos al intentar ejecutar una instrucción `MOV` de escritura y por lo tanto se dispara una General Protection Fault (Excepción 13). En el teórico: Si no tienes un manejador de interrupciones (IDT) configurado, la CPU entrará en un "Triple Fault" y la computadora (o el emulador QEMU/Bochs) se reiniciará.
 
-En el teórico: Si no tienes un manejador de interrupciones (IDT) configurado, la CPU entrará en un "Triple Fault" y la computadora (o el emulador QEMU/Bochs) se reiniciará.
+Para implementar tales cambios, se propone modificar el descriptor 2 de datos del código de assembler presentado anteriormente con la siguiente línea:
+
+qemu-system-i386 -s -S -drive format=raw,file=boot.bin
+
+gdb
+(gdb) target remote localhost:1234
+(gdb) set architecture i386
+(gdb) break *0x7c00
+(gdb) continue
+
+
+
+
+
+
 
 ### 4.3- ¿Con qué valor se cargan los registros de segmento en Modo Protegido y por qué?
 A diferencia del Modo Real, donde el registro contiene una dirección base segmentada (valor * 16), en Modo Protegido los registros (`CS`, `DS`, `SS`, etc.) se cargan con un Selector de Segmento. Esto se debe a que en este modo, los registros ya no apuntan a una dirección física directa, sino que actúan como un índice o puntero hacia la `GDT`. El valor cargado tiene esta estructura:
@@ -361,8 +375,6 @@ A diferencia del Modo Real, donde el registro contiene una dirección base segme
 * Bits 0-1 (`RPL`): El nivel de privilegio solicitado (Ring 0 a Ring 3).
 
 si por ejemplo se carga el: `0x08` (binario `1000`), el índice es 1, lo que significa que se está seleccionando el segundo descriptor de la `GDT`.
-
-### 4.4- Verificación con GDB, se 
 
 
 ## 5- Bibliografía
