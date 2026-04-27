@@ -220,8 +220,9 @@ gdb
 
 De esta forma, podemos hacer uso de las instrucciones `continue` y `si`, para ir compilando las líneas de código de `Assembler` y ver como cambian los registros tal como muestran las siguientes figuras:
 
+![Depuración GDB1](https://github.com/ErnestMonja/Sistemas-de-Computacion/blob/main/TP3%20-%20Modo%20Real%20vs%20Protegido%20y%20UEFI/Linker/4-%20Depuraci%C3%B3n%20GDB%20(1).png)
 
-
+![Depuración GDB2](https://github.com/ErnestMonja/Sistemas-de-Computacion/blob/main/TP3%20-%20Modo%20Real%20vs%20Protegido%20y%20UEFI/Linker/5-%20Depuraci%C3%B3n%20GDB%20(2).png)
 
 
 
