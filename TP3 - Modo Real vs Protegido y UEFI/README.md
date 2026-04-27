@@ -190,7 +190,7 @@ Y luego mediante el comando `hd main.img` para el cual se muestra la siguiente s
 ![](https://github.com/ErnestMonja/Sistemas-de-Computacion/blob/main/TP3%20-%20Modo%20Real%20vs%20Protegido%20y%20UEFI/Linker/3-%20hd%20main.png)
 
 
-Se propone para concluir este apartado, realizar una depuración mediante `GBD`, siendo esta una herramienta ya utilizada para el [Trabajo Práctico N°2](https://github.com/ErnestMonja/Sistemas-de-Computacion/tree/main/TP2%20-%20Stack%20frame) la cual permite depurar limpiamente los códigos en lenguaje `Assembler`. Para ello se propone primero instanciar el código de assembler mediante los siguientes comandos:
+Se propone para concluir este apartado, realizar una depuración mediante `GDB`, siendo esta una herramienta ya utilizada para el [Trabajo Práctico N°2](https://github.com/ErnestMonja/Sistemas-de-Computacion/tree/main/TP2%20-%20Stack%20frame) la cual permite depurar limpiamente los códigos en lenguaje `Assembler`. Para ello se propone primero instanciar el código de assembler mediante los siguientes comandos:
 
 ```bash
 as -g -o src/main.o src/main.asm
@@ -226,7 +226,71 @@ De esta forma, podemos hacer uso de las instrucciones `continue` y `si`, para ir
 
 
 
-## 4- Desafio Final
+## 4- Desafio Final: Pasaje a Modo Protegido sin Macros
+Como bien indica el título de esta sección, el objetivo de la misma consiste en crear un código en `Assembler` que nos permita pasar a modo protegido, sin la necesidad de utilizar macros. para realizar tal proceso se requiere que el procesador ejecute los siguientes 3 pasos fundamentales:
+* Definir la `GDT` (Global Descriptor Table): Se trata de una parte fundamental de la arquitectura `x86` de `Intel` que ayuda a gestionar cómo se accede a la memoria y cómo se protege. Introducida con el procesador `Intel 80286`, desempeña un papel clave en la definición de los segmentos de memoria y sus atributos: la dirección base, el tamaño y los privilegios de acceso, como la ejecutabilidad y la escritura.
+* Cargar la `GDT`: Usar la instrucción `LGDT`.
+* Activar el bit de protección: Poner en 1 el bit 0 (`PE` - Protection Enable) del registro de control `CR0`. El registro `CR0` se puede utilizar para habilitar o deshabilitar ciertas funciones del procesador, como el modo protegido para activar el direccionamiento virtual y la paginación de memoria.
+* Hacer un `JMP` lejano (Far `JMP`): Para limpiar la cola de ejecución y cargar el selector de código en `CS`.
+
+Con estos aspectos en mente, se propone utilzar el siguiente código:
+
+```asm
+[bits 16]
+org 0x7c00          ; Origen típico de un bootloader
+
+start:
+    cli             ; Deshabilitar interrupciones
+    lgdt [gdt_ptr]  ; Cargar la dirección de la GDT
+
+    mov eax, cr0
+    or eax, 1       ; Activar bit PE
+    mov cr0, eax
+
+    jmp 0x08:init_pm ; Salto lejano al selector de código (Offset 8 en GDT)
+
+[bits 32]
+init_pm:
+    ; Cargar los registros de segmento de datos
+    mov ax, 0x10    ; Offset del descriptor de datos en la GDT (16 decimal)
+    mov ds, ax
+    mov ss, ax
+    mov es, ax
+    
+    ; Intentar escribir en el segmento de datos
+    mov byte [0x00], 'A' 
+    
+    jmp $           ; Bucle infinito
+
+; --- Estructura de la GDT ---
+gdt_start:
+    dq 0x0          ; Descriptor nulo (obligatorio)
+
+; Descriptor de Código (Base: 0x0, Límite: 0xFFFFF, Privilegio: 0, Tipo: Ejecutable/Lectura)
+gdt_code:
+    dw 0xffff       ; Limit (bits 0-15)
+    dw 0x0000       ; Base (bits 0-15)
+    db 0x00         ; Base (bits 16-23)
+    db 10011010b    ; Access byte (Presente, Ring 0, Código, Ejecutable)
+    db 11001111b    ; Flags + Limit (bits 16-19)
+    db 0x00         ; Base (bits 24-31)
+
+; Descriptor de Datos (Base: 0x10000, Límite: 0xFFFF, Tipo: Datos Escritura/Lectura)
+gdt_data:
+    dw 0xffff       
+    dw 0x0000       ; Base baja (ajustar para diferenciar espacio)
+    db 0x01         ; Base media (Aquí definimos que empieza en 0x10000)
+    db 10010010b    ; Access byte (Dato, Read/Write)
+    db 11001111b    
+    db 0x00         
+
+gdt_end:
+
+gdt_ptr:
+    dw gdt_end - gdt_start - 1 ; Tamaño
+    dd gdt_start               ; Dirección
+```
+
 
 
 
@@ -267,3 +331,5 @@ De esta forma, podemos hacer uso de las instrucciones `continue` y `si`, para ir
 * [Caso de Estudio de Linker](https://stackoverflow.com/questions/59881880/what-memory-is-impacted-using-the-location-counter-in-linker-script)
 * [MBR](https://en.wikipedia.org/wiki/Master_boot_record)
 * [IBM PC DOS](https://es.wikipedia.org/wiki/IBM_PC_DOS)
+* [GDT](https://en.wikipedia.org/wiki/Global_Descriptor_Table)
+* [Registro CR0](https://sites.google.com/site/masumzh/articles/x86-architecture-basics/x86-architecture-basics)
