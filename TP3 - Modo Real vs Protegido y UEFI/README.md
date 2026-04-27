@@ -347,7 +347,7 @@ qemu-system-i386 -drive format=raw,file=boot.bin
 
 Se observa entonces la siguiente salida al ejecutar este código:
 
-![Compilación](https://github.com/ErnestMonja/Sistemas-de-Computacion/blob/main/TP3%20-%20Modo%20Real%20vs%20Protegido%20y%20UEFI/Modo%20Protegido/Compilaci%C3%B3n.png)
+![Compilación](https://github.com/ErnestMonja/Sistemas-de-Computacion/blob/main/TP3%20-%20Modo%20Real%20vs%20Protegido%20y%20UEFI/Modo%20Protegido/1-%20Compilaci%C3%B3n.png)
 
 Para asegurarse que se entro en modo seguro, se incluyeron unas líneas de código extra para imprimir por pantalla los caractéres `MP`, haciendo alusión a que el códgo efectivamente entro al Modo Protegido. Para ello, se utilizo la memoria `VGA`, la cual en modo texto, la pantalla es un array de bytes en la RAM. Cada carácter ocupa 2 bytes: uno para el símbolo ASCII y otro para el color (atributo). Esta memoria empieza en la dirección física `0xB8000`, sin embargo se tiene que en el `GDT` el segmento de datos tiene una Base de `0x00020000`.
 
