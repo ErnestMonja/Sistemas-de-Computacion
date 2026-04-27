@@ -40,36 +40,43 @@ Estos comandos efectivamente instalan QEMU y lo inicializan con la imagen bootea
 Se propone entonces grabar tal imagen dentro de un pendrive y bootear el hardware de acuerdo a la siguiente línea:
 
 ```bash
-sudo dd if=main.img of=/dev/sdX
+sudo dd if=main.img of=/dev/sdb
 ```
 
-El comando `dd` o Data Duplicator copia datos a bajo nivel, bit por bit, ignorando sistemas de archivos (como FAT32 o NTFS) desde la imagen creada hasta un pendrive. Nótese que de utilizar `sda` (que suele ser el disco principal), se podría borrar accidentalmente el sistema operativo. Por lo tanto, se debe verificar con el comando `lsblk`, qué letra tiene el pendrive utilizado.
+El comando `dd` o Data Duplicator copia datos a bajo nivel, bit por bit, ignorando sistemas de archivos (como FAT32 o NTFS) desde la imagen creada hasta un pendrive. Nótese que de utilizar `sda` (que suele ser el disco principal) en lugar de `sdb`, se podría borrar accidentalmente el sistema operativo. Por lo tanto, se debe verificar con el comando `lsblk`, qué letra tiene el pendrive utilizado.
 
-La implementa
+Nótese que si se esta usando una máquina virtual de Linux (como es el caso), utilizar un pendrive puede resultar bastante complicado debido a que al conectarlo a la computadora de forma física, ocurre un conflicto entre Windows (nuestro sistema operativo anfitrión) y Ubuntu-Linux (sistema operativo emulado) por el control del HW y como es de esperarse, el sistema operativo anfitrión no cede, ocasionando así un error de `PNP_DETECTED_FATAL_ERROR` (véase: [Errores de Drivers](https://learn.microsoft.com/es-es/windows-hardware/drivers/debugger/bug-check-0xca--pnp-detected-fatal-error)) que indica que el administrador `Plug and Play (PnP)` ha fallado debido a controladores (drivers) dañados, incompatibles o hardware defectuoso. 
 
-La salida en consola de estos comandos es la que se muestra a continuación:
+![PNP_DETECTED_FATAL_ERROR](https://github.com/ErnestMonja/Sistemas-de-Computacion/blob/main/TP3%20-%20Modo%20Real%20vs%20Protegido%20y%20UEFI/Imagen%20Booteable/3-%20PNP_DETECTED_FATAL_ERROR.jpeg)
 
-![]()
+Para solventar este problema, se decidio emular el comportamiento del pendrive generando un archivo vacío de `100 [MB]` en el disco con el siguiente comando:
 
-Si
+```bash
+dd if=/dev/zero of=pendrive_virtual.img bs=1M count=100
+```
 
+Tras una simple configuración dentro del entorno de la máquina virtual, de modo que se conecta este "pendrive" a la VM como si fuera un disco extra, se tiene que al ejecutar el comando `lsblk`, se observa la siguiente salida:
 
+![lsbkl](https://github.com/ErnestMonja/Sistemas-de-Computacion/blob/main/TP3%20-%20Modo%20Real%20vs%20Protegido%20y%20UEFI/Imagen%20Booteable/4-%20LSBLK.png)
 
+Se observa que efectivamente se toma este archivo vacio de `100 [MB]` como un disco extra y por lo tanto puede ser tratado como un pendrive para duplicar los datos de la imagen creada. Ejecutando el comando `sudo dd if=main.img of=/dev/sdb`, se obtiene la siguiente salida en consola:
 
+![imagen generada](https://github.com/ErnestMonja/Sistemas-de-Computacion/blob/main/TP3%20-%20Modo%20Real%20vs%20Protegido%20y%20UEFI/Imagen%20Booteable/5-%20Imagen%20copiada.png)
 
+Se verifica la exitosa copia de valores con los siguientes comandos:
 
+```bash
+sudo cmp -n 512 main.img /dev/sdb
+sudo dd if=/dev/sdb bs=1 skip=510 count=2 | xxd
+```
 
+El primer comando compara los primeros `512` bytes del archivo main.img con los primeros `512` bytes del pendrive virtual ubicado en: `/dev/sdb`, de modo que si los bytes son iguales, entonces el comando no retornará nada. El ultimo comando lee los ultimos 2 bytes del pendrive virtual y verifica que sean iguales al `boot signature`, es decir que sean iguales a: `0x55` y `0xAA` en hexadecimal. Se observa entonces la siguiente salida de consola:
 
+![Verificación](https://github.com/ErnestMonja/Sistemas-de-Computacion/blob/main/TP3%20-%20Modo%20Real%20vs%20Protegido%20y%20UEFI/Imagen%20Booteable/6-%20Verificaci%C3%B3n.png)
 
+Se observa que efectivamente los archivos terminan efectivamente con tal signatura de números hexadecimales de modo que efectivamente se ha copiado la imagen de arranque en nuestro pendrive virtual. Se tiene entonces que al arrancar la máquina virtual desde este disco, se cargan los `512` bytes del archivo `main.img` en la memoria ram y al leer los números hexadecimales conseguidos, el sistema de arranque detecta que el pendrive es efectivamente un disco de arranque y por lo tanto se le transfiere el control al procesador para que empiece a ejecutar la primera instrucción en esa dirección. Sin embargo, como el resto del archivo son solo ceros (que el procesador interpreta como la instrucción ADD), el procesador empezará a ejecutar instrucciones nulas y sin sentido hasta que colapse o se reinicie. En este caso, al utilizar QEMU como emulador de arranque, se observa que la pantalla se queda tildada en "Booting from Hard Disk..." y no pasa nada más.
 
-
-
-
-
-
-
-
-
+![](https://github.com/ErnestMonja/Sistemas-de-Computacion/blob/main/TP3%20-%20Modo%20Real%20vs%20Protegido%20y%20UEFI/Imagen%20Booteable/7-%20Ejecuci%C3%B3n.png)
 
 
 
