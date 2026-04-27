@@ -239,9 +239,6 @@ Con estos aspectos en mente, se propone utilzar el siguiente código:
 ```asm
 # =============================================================================
 # DESAFÍO FINAL: MODO PROTEGIDO (Sintaxis AT&T)
-# Compilar con: 
-#   as --32 boot.s -o boot.o
-#   ld -m elf_i386 -Ttext 0x7c00 --oformat binary boot.o -o boot.bin
 # =============================================================================
 
 .code16
@@ -257,8 +254,7 @@ _start:
     mov %ax, %ss
     mov $0x7c00, %sp            # Stack justo antes del bootloader
 
-    # 2. Cargar la GDT
-    # Usamos la dirección absoluta (0x7c00 + offset) para que lgdt la encuentre
+    # 2. Cargar la GDT: Usamos la dirección absoluta (0x7c00 + offset) para que lgdt la encuentre
     lgdt gdt_descriptor
 
     # 3. Activar bit PE en CR0
@@ -266,8 +262,7 @@ _start:
     or $0x1, %eax
     mov %eax, %cr0
 
-    # 4. Salto lejano (Far JMP) para pasar a 32 bits y cargar CS
-    # En AT&T la sintaxis es: ljmp $selector, $offset
+    # 4. Salto lejano (Far JMP) para pasar a 32 bits y cargar CS. En AT&T la sintaxis es: ljmp $selector, $offset
     ljmp $CODE_SEG, $protected_mode
 
 # -----------------------------------------------------------------------------
@@ -299,7 +294,7 @@ gdt_start:
 gdt_end:
 
 gdt_descriptor:
-    .word gdt_end - gdt_start - 1   # tamaño
+    .word gdt_end - gdt_start - 1    # tamaño
     .long gdt_start                  # dirección
 
 .equ CODE_SEG, 8
@@ -318,15 +313,22 @@ protected_mode:
     mov %ax, %gs
     mov %ax, %ss
 
-    # --- PRUEBA DE ESCRITURA ---
-    # Intentamos escribir en el inicio del segmento de datos.
-    # Como la Base es 0x20000, esto escribirá en la RAM física 0x20000.
+    # --- ESCRIBIR "MP" EN PANTALLA ---
+    # Usamos el offset 0x98000 para que sumado a la base (0x20000) de 0xB8000
+    
+    # Carácter 'M' en la primera posición
+    movb $'M', 0x98000
+    # Atributo de color (0x0F = Blanco sobre negro)
+    movb $0x0F, 0x98001
+    
+    # Carácter 'P' en la segunda posición (2 bytes después)
+    movb $'P', 0x98002
+    movb $0x0F, 0x98003
+
+    # --- PRUEBA DE ESCRITURA EN RAM ---
+    # Esto sigue escribiendo en la dirección física 0x20000
     movb $'O', (0x0)
     movb $'K', (0x1)
-
-    # Si querés escribir en pantalla VGA (que está en 0xB8000), 
-    # recordá que ahora el cálculo es: Dirección Física - Base del Segmento.
-    # Como tu base es 0x20000, para llegar a 0xB8000 deberías usar offset 0x98000.
 
     jmp .
 
