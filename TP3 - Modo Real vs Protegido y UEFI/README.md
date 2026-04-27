@@ -354,14 +354,27 @@ Si se cambia el bit de acceso del descriptor de datos (específicamente el bit 1
 
 Para implementar tales cambios, se propone modificar el descriptor 2 de datos del código de assembler presentado anteriormente con la siguiente línea:
 
-qemu-system-i386 -s -S -drive format=raw,file=boot.bin
+```asm
 
+```
+
+Luego, se ensambla el nuevo archivo de pruebas y se inicializa en pausa en `QEMU` con los siguientes comandos:
+
+```bash
+as --32 bootTest.asm -o bootTest.o
+ld -m elf_i386 -Ttext 0x7c00 --oformat binary bootTest.o -o bootTest.bin
+qemu-system-i386 -s -S -drive format=raw,file=bootTest.bin
+```
+
+Finalmente, se abre otra terminal para instanciar `GDB` con los siguientes comandos:
+
+```bash
 gdb
 (gdb) target remote localhost:1234
 (gdb) set architecture i386
 (gdb) break *0x7c00
 (gdb) continue
-
+```
 
 
 
