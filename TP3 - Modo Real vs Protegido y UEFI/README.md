@@ -193,8 +193,8 @@ Y luego mediante el comando `hd main.img` para el cual se muestra la siguiente s
 Se propone para concluir este apartado, realizar una depuración mediante `GDB`, siendo esta una herramienta ya utilizada para el [Trabajo Práctico N°2](https://github.com/ErnestMonja/Sistemas-de-Computacion/tree/main/TP2%20-%20Stack%20frame) la cual permite depurar limpiamente los códigos en lenguaje `Assembler`. Para ello se propone primero instanciar el código de assembler mediante los siguientes comandos:
 
 ```bash
-as -g -o src/main.o src/main.asm
-ld --oformat binary -o src/main.img -T src/link.ld src/main.o
+as -g -o main.o main.asm
+ld --oformat binary -o main.img -T link.ld main.o
 qemu-system-i386 -fda main.img -boot a -s -S -monitor stdio
 ```
 
@@ -236,59 +236,90 @@ Como bien indica el título de esta sección, el objetivo de la misma consiste e
 Con estos aspectos en mente, se propone utilzar el siguiente código:
 
 ```asm
-[bits 16]
-org 0x7c00          ; Origen típico de un bootloader
+; =============================================================================
+; DESAFÍO: PASO A MODO PROTEGIDO (x86)
+; Compilar con: nasm -f bin boot.asm -o boot.bin
+; Ejecutar con: qemu-system-x86_64 boot.bin
+; =============================================================================
+
+[bits 16]           ; Empezamos en modo real (16 bits)
+[org 0x7c00]        ; Dirección de carga estándar del BIOS
 
 start:
     cli             ; Deshabilitar interrupciones
-    lgdt [gdt_ptr]  ; Cargar la dirección de la GDT
+    xor ax, ax      ; Limpiar registros de segmento
+    mov ds, ax
+    mov es, ax
+    mov ss, ax
+    mov sp, 0x7c00  ; Definir el stack abajo del bootloader
 
+    ; 1. Cargar la GDT
+    lgdt [gdt_descriptor]
+
+    ; 2. Activar Modo Protegido en CR0
     mov eax, cr0
-    or eax, 1       ; Activar bit PE
+    or eax, 0x1
     mov cr0, eax
 
-    jmp 0x08:init_pm ; Salto lejano al selector de código (Offset 8 en GDT)
+    ; 3. Salto lejano (Far JMP) para limpiar el pipeline y cargar CS
+    ; 0x08 es el offset del descriptor de código en la GDT
+    jmp 0x08:init_pm
 
-[bits 32]
+[bits 32]           ; Ya estamos en 32 bits
 init_pm:
-    ; Cargar los registros de segmento de datos
-    mov ax, 0x10    ; Offset del descriptor de datos en la GDT (16 decimal)
+    ; 4. Cargar los selectores de datos (0x10 es el offset en la GDT)
+    mov ax, 0x10
     mov ds, ax
     mov ss, ax
     mov es, ax
-    
-    ; Intentar escribir en el segmento de datos
-    mov byte [0x00], 'A' 
-    
-    jmp $           ; Bucle infinito
+    mov fs, ax
+    mov gs, ax
 
-; --- Estructura de la GDT ---
+    ; --- PRUEBA DE ESCRITURA ---
+    ; Como definimos que el segmento de datos empieza en 0x10000 (ver GDT),
+    ; escribir en [0x0] aquí escribirá realmente en la dirección física 0x10000.
+    mov byte [0x0], 'H'
+    mov byte [0x1], 'I'
+
+    ; Bucle infinito
+    jmp $
+
+; -----------------------------------------------------------------------------
+; ESTRUCTURA DE LA GDT (Global Descriptor Table)
+; -----------------------------------------------------------------------------
 gdt_start:
-    dq 0x0          ; Descriptor nulo (obligatorio)
+    ; Descriptor Nulo (8 bytes de ceros)
+    dd 0x0, 0x0
 
-; Descriptor de Código (Base: 0x0, Límite: 0xFFFFF, Privilegio: 0, Tipo: Ejecutable/Lectura)
-gdt_code:
-    dw 0xffff       ; Limit (bits 0-15)
+    ; Descriptor de Código (Selector 0x08)
+    ; Base: 0x00000000, Límite: 0xFFFFF (4GB con granularidad de 4KB)
+    ; Tipo: Ejecutable, lectura, ring 0
+    dw 0xffff       ; Límite (bits 0-15)
     dw 0x0000       ; Base (bits 0-15)
     db 0x00         ; Base (bits 16-23)
-    db 10011010b    ; Access byte (Presente, Ring 0, Código, Ejecutable)
-    db 11001111b    ; Flags + Limit (bits 16-19)
+    db 10011010b    ; Access byte (Presente, Ring 0, Código, Exec/Read)
+    db 11001111b    ; Flags (Granularidad 4KB, 32-bit) + Límite (16-19)
     db 0x00         ; Base (bits 24-31)
 
-; Descriptor de Datos (Base: 0x10000, Límite: 0xFFFF, Tipo: Datos Escritura/Lectura)
-gdt_data:
+    ; Descriptor de Datos (Selector 0x10)
+    ; Base: 0x00010000 (ESPACIO DIFERENCIADO), Límite: 0xFFFFF
+    ; Tipo: Datos, Lectura/Escritura, ring 0
     dw 0xffff       
-    dw 0x0000       ; Base baja (ajustar para diferenciar espacio)
-    db 0x01         ; Base media (Aquí definimos que empieza en 0x10000)
-    db 10010010b    ; Access byte (Dato, Read/Write)
+    dw 0x0000       ; Base (bits 0-15) -> 0x0000
+    db 0x01         ; Base (bits 16-23) -> 0x01 (Esto hace que empiece en 0x10000)
+    db 10010010b    ; Access byte (Presente, Ring 0, Datos, Read/Write)
     db 11001111b    
     db 0x00         
 
 gdt_end:
 
-gdt_ptr:
-    dw gdt_end - gdt_start - 1 ; Tamaño
-    dd gdt_start               ; Dirección
+gdt_descriptor:
+    dw gdt_end - gdt_start - 1 ; Tamaño de la GDT
+    dd gdt_start               ; Dirección de inicio
+
+; Relleno para completar los 512 bytes del sector
+times 510-($-$$) db 0
+dw 0xaa55           ; Firma de arranque mágica
 ```
 
 
