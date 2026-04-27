@@ -122,7 +122,7 @@ Un Linker (enlazador) o editor de enlaces es un programa informático que combin
 * Asignación de memoria: Decide en qué dirección de memoria se ubicará cada sección del código (código, datos, variables globales).
 * Relocalización: Ajusta las direcciones de memoria dentro del código para que coincidan con el lugar donde finalmente se cargará el programa.
 
-Para entender una mejor aplicación del Linker, se propone continuar con el escenario planteado por un usuario en [StackOverflow](https://stackoverflow.com/questions/59881880/what-memory-is-impacted-using-the-location-counter-in-linker-script) el cual se plantea tambien como parte de la consigna de este trabajo práctico. La idea que planteo este usuario, fue de imprimir un simple "Hello World" en Assembler mediante el uso del modo real de una computadora. Para ello utilizo el siguiente código en `Assembler`:
+Para entender una mejor aplicación del Linker, se propone continuar con el escenario planteado por un usuario en [StackOverflow](https://stackoverflow.com/questions/59881880/what-memory-is-impacted-using-the-location-counter-in-linker-script) el cual se plantea tambien como parte de la consigna de este trabajo práctico. La idea que planteo este usuario, fue de imprimir un simple "hello world" en `Assembler` mediante el uso del modo real de una computadora. Para ello utilizo el siguiente código en `Assembler`:
 
 ```asm
 .code16
@@ -137,7 +137,7 @@ loop:
 halt:
     hlt
 msg:
-    .asciz "Hello World"
+    .asciz "hello world"
 ```
 
 Luego, se propuso el siguiente código en Linker para unirlo en un ejecutable y pasarselo al disco de arranque:
@@ -161,20 +161,44 @@ SECTIONS
 }
 ```
 
-La dirección que vemos en el script de Linker, es la dirección de carga (`VMA` - Virtual Memory Address) la cual es igual a `0x7C00` siendo esta es la ubicación estándar en la memoria `RAM` donde la `BIOS` de un `PC` basado en `x86` carga el primer sector de arranque (`MBR` - Master Boot Record) de `512` bytes. Al encenderse, la `CPU` en modo real de `16` bits transfiere el control a esta dirección para iniciar el sistema operativo. es decir, le indica al linker que el código "cree" que está viviendo en esa dirección específica de la memoria RAM.
-
-El valor de `0x7C00` tiene origen del `IBM PC DOS` (The IBM Personal Computer Disk Operating System), siendo este un sistema operativo de disco (DOS) que dominó el mercado de los computadores personales entre 1985 y 1995, donde dado que la computadora base tenía solo `32` [KB] de memoria `RAM`, `IBM` tomo la decisión de que el sector de booteo debía cargarse cerca del final de esos primeros `32` [KB] de `RAM`, pero dejando espacio suficiente para que el propio sector de booteo pudiera trabajar y tener su propio "stack" (pila).
+La dirección que vemos en el script de Linker, es la dirección de carga (`VMA` - Virtual Memory Address) la cual es igual a `0x7C00` siendo esta es la ubicación estándar en la memoria `RAM` donde la `BIOS` de un `PC` basado en `x86` carga el primer sector de arranque (`MBR` - Master Boot Record) de `512` bytes. Al encenderse, la `CPU` en modo real de `16` bits transfiere el control a esta dirección para iniciar el sistema operativo. es decir, le indica al linker que el código "cree" que está viviendo en esa dirección específica de la memoria RAM. El valor de `0x7C00` tiene origen del `IBM PC DOS` (The IBM Personal Computer Disk Operating System), siendo este un sistema operativo de disco (DOS) que dominó el mercado de los computadores personales entre 1985 y 1995, donde dado que la computadora base tenía solo `32` [KB] de memoria `RAM`, `IBM` tomo la decisión de que el sector de booteo debía cargarse cerca del final de esos primeros `32` [KB] de `RAM`, pero dejando espacio suficiente para que el propio sector de booteo pudiera trabajar y tener su propio "stack" (pila).
 
 Estas líneas en el Linker son fundamentales debido a que en los códigos en `Assembler`, las referencias a datos (como `mov $msg, %si`) se convierten en direcciones absolutas durante la edición de memoria (linking). Es decir, que de no incluir la línea `. = 0x7c00` en el archivo `link.ld` asume que el programa empieza en la posición `0x0000`de la memoria `RAM`. Se tiene entonces que cuando el código busque el mensaje, dado que la `BIOS` carga el código en `0x7C00`, el programa buscaría en el lugar equivocado y no funcionaria el código.
 
+Se tiene que para ensamblar este código, se deben ejecutar las siguientes lineas de comando 
+
+```bash
+as -g -o main.o main.asm
+ld --oformat binary -o main.img -T link.ld main.o
+qemu-system-x86_64 -hda main.img
+```
+
+En estas líneas, se utiliza `--oformat binary` para generar un binario plano, eliminando las cabeceras del formato ELF que la BIOS no puede interpretar, garantizando así que el archivo contenga solo instrucciones ejecutables que el procesador procesará secuencialmente desde el momento del booteo. A continuación se presenta la salida en `QEMU` del código:
+
+![Linkeado](https://github.com/ErnestMonja/Sistemas-de-Computacion/blob/main/TP3%20-%20Modo%20Real%20vs%20Protegido%20y%20UEFI/Linker/1-%20Linkeado%20y%20compilaci%C3%B3n.png)
+
+Como se observa, el código es linkeado y mandado al emulador de `QEMU` el cual imprime correctamente la salida esperada de "hello world". Se propone descomponer este código en `Assembler` primero mediante el comando `objdump` para el cual se provee la siguiente línea de código:
+
+```bash
+objdump -D -b binary -m i8086 -M addr16,data16 main.img
+```
+
+![](https://github.com/ErnestMonja/Sistemas-de-Computacion/blob/main/TP3%20-%20Modo%20Real%20vs%20Protegido%20y%20UEFI/Linker/2-%20objdump.png)
+
+Y luego mediante el comando `hd main.img` para el cual se muestra la siguiente salida en consola:
+
+![](https://github.com/ErnestMonja/Sistemas-de-Computacion/blob/main/TP3%20-%20Modo%20Real%20vs%20Protegido%20y%20UEFI/Linker/3-%20hd%20main.png)
 
 
+Se propone para concluir este apartado, realizar una depuración mediante `GBD`, siendo esta una herramienta ya utilizada para el [Trabajo Práctico N°2](https://github.com/ErnestMonja/Sistemas-de-Computacion/tree/main/TP2%20-%20Stack%20frame) la cual permite depurar limpiamente los códigos en lenguaje `Assembler`. Para ello se propone primero instanciar el código de assembler mediante los siguientes comandos:
+
+```bash
+as -g -o src/main.o src/main.asm
+ld --oformat binary -o src/main.img -T src/link.ld src/main.o
+qemu-system-i386 -fda src/main.img -boot a -s -S -monitor stdio
+```
 
 
-
-Compare la salida de objdump con hd, verifique donde fue colocado el programa dentro de la imagen. 
-Grabar la imagen en un pendrive y probarla en una pc y subir una foto 
-¿Para que se utiliza la opción --oformat binary en el linker?
 
 
 
