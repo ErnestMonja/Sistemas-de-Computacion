@@ -370,6 +370,7 @@ Finalmente, se abre otra terminal para instanciar `GDB` con los siguientes coman
 
 ```bash
 gdb
+(gdb) symbol-file boot.o
 (gdb) target remote localhost:1234
 (gdb) set architecture i386
 (gdb) break *0x7c00
