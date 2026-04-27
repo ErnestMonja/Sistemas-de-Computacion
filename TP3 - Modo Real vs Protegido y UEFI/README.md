@@ -195,8 +195,30 @@ Se propone para concluir este apartado, realizar una depuración mediante `GBD`,
 ```bash
 as -g -o src/main.o src/main.asm
 ld --oformat binary -o src/main.img -T src/link.ld src/main.o
-qemu-system-i386 -fda src/main.img -boot a -s -S -monitor stdio
+qemu-system-i386 -fda main.img -boot a -s -S -monitor stdio
 ```
+
+Por otro lado, podemos abrir otra terminal de comandos e introducir los siguientes comandos:
+
+```bash
+ld -T link.ld -o main.elf main.o
+ld -T link.ld --oformat binary -o main.img main.o
+```
+
+Con esto creamos un archivo `.elf` el cual será utilizado para depurar el código, y luego configuramos el entorno de `GDB` con:
+
+```bash
+gdb
+    file main.elf
+    target remote localhost:1234
+    set architecture i8086
+    break *0x7c00
+    break *0x7c0d
+    layout asm
+    layout regs
+```
+
+De esta forma, podemos hacer uso de las instrucciones `continue` y `si`, para ir compilando las líneas de código de `Assembler` y ver como cambian los registros tal como muestran las siguientes figuras:
 
 
 
