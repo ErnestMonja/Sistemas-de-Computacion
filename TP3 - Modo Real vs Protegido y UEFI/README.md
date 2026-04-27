@@ -349,13 +349,36 @@ Se observa entonces la siguiente salida al ejecutar este código:
 
 ![Compilación](https://github.com/ErnestMonja/Sistemas-de-Computacion/blob/main/TP3%20-%20Modo%20Real%20vs%20Protegido%20y%20UEFI/Modo%20Protegido/Compilaci%C3%B3n.png)
 
+Para asegurarse que se entro en modo seguro, se incluyeron unas líneas de código extra para imprimir por pantalla los caractéres `MP`, haciendo alusión a que el códgo efectivamente entro al Modo Protegido. Para ello, se utilizo la memoria `VGA`, la cual en modo texto, la pantalla es un array de bytes en la RAM. Cada carácter ocupa 2 bytes: uno para el símbolo ASCII y otro para el color (atributo). Esta memoria empieza en la dirección física `0xB8000`, sin embargo se tiene que en el `GDT` el segmento de datos tiene una Base de `0x00020000`.
+
+Por lo tanto, para llegar a la dirección física 0xB8000, el offset que le pasamos al procesador debe ser:
+
+$$
+\text{Offset} = \text{Dirección Destino} - \text{Base del Segmento}
+$$
+
+$$
+0xB8000 - 0x20000 = 0x98000
+$$
+
+Lo cual se observa en las líneas de código en `Assembler`, donde se utilizan los `2` bytes mencionados anteriormente.
+
+
+
 ### 4.2- Cambio de los Bits de Acceso del Segmento de datos a solo lectura: Depuración con GDB
-Si se cambia el bit de acceso del descriptor de datos (específicamente el bit 1 del byte de acceso) de 1 (Read/Write) a 0 (Read-Only), se tiene que el hardware de la `CPU` detecta una violación de permisos al intentar ejecutar una instrucción `MOV` de escritura y por lo tanto se dispara una General Protection Fault (Excepción 13). En el teórico: Si no tienes un manejador de interrupciones (IDT) configurado, la CPU entrará en un "Triple Fault" y la computadora (o el emulador QEMU/Bochs) se reiniciará.
+Si se cambia el bit de acceso del descriptor de datos (específicamente el bit 1 del byte de acceso) de 1 (Read/Write) a 0 (Read-Only), se tiene que el hardware de la `CPU` detecta una violación de permisos al intentar ejecutar una instrucción `MOV` de escritura y por lo tanto se dispara una General Protection Fault (Excepción 13). En el teórico: Si no se tiene un manejador de interrupciones (IDT) configurado, la CPU entrará en un "Triple Fault" y la computadora (o el emulador QEMU/Bochs) se reiniciará.
 
 Para implementar tales cambios, se propone modificar el descriptor 2 de datos del código de assembler presentado anteriormente con la siguiente línea:
 
 ```asm
-
+    # Descriptor 2: Datos (Selector 0x10)
+    # CONFIGURACIÓN: Base diferenciada en 0x00020000 para cumplir la consigna
+    .word 0xFFFF        
+    .word 0x0000        # base 0:15
+    .byte 0x02          # base 16:23 (Aquí definimos que empieza en 0x20000)
+    .byte 0xCF          
+    .byte 0x90          # acceso: datos, ring 0, lectura/escritura -- se modifica de 0x92 a 0x90 para solo lectura
+    .byte 0x00     
 ```
 
 Luego, se ensambla el nuevo archivo de pruebas y se inicializa en pausa en `QEMU` con los siguientes comandos:
@@ -377,8 +400,11 @@ gdb
 (gdb) continue
 ```
 
+Vemos entonces que a pesar de escribir el comando `continue` (o `c` segun la captura), el emulador de `QEMU` vuelve a resetearse y apunta nuevamente a la dirección `0x7C00` la cual es como ya vimos, la dirección de arranque del código luego del booteo. Esto se aprecia en la siguiente imagen:
 
+![Compilación reiterada](https://github.com/ErnestMonja/Sistemas-de-Computacion/blob/main/TP3%20-%20Modo%20Real%20vs%20Protegido%20y%20UEFI/Modo%20Protegido/2-%20Compilaci%C3%B3n.png)
 
+Esto se debe a que al principio del código, al pasar el modo protegido y cargar en el registro de segmento `DS` el valor de `0x90` (es decir que el bit de acceso a datos sea unicamente de lectura) imposiblita la escritura del descriptor de datos, de modo que al intentar escribir `M` en `0x98000`, el HW detecta que este segmento es unicamente de lectura, lanzando asi el `GPT` (General Protection Fault). Luego, dado que no hay un manejador de excepciones, el procesador no sabe que hacer y procede a reiniciarse. Al reiniciarse, se apunta a la dirección `0x7C00` repitendo así el ciclo infinito visto en GDB.
 
 
 
