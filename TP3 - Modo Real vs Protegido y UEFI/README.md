@@ -82,41 +82,104 @@ Se observa que efectivamente los archivos terminan efectivamente con tal signatu
 
 ## 2- UEFI y Coreboot:
 ### 2.1- UEFI: Definición, uso y funciones
-La UEFI (Unified Extensible Firmware Interface) consiste en una especificación de firmware de computadora, la cual se presenta como un estándar moderno que reemplaza a la BIOS (Basic Input/Output System), siendo este último el firmware fundamental preinstalado en un chip de la placa base que inicia, prueba (POST) y configura el hardware (CPU, RAM, discos) al encender el PC. Se tiene que a diferencia de la BIOS, que está limitada al modo real de 16 bits, la UEFI puede ejecutarse en modos de mayor capacidad (32 o 64 bits) y permite un arranque más flexible y seguro.
+La `UEFI` (Unified Extensible Firmware Interface) consiste en una especificación de firmware de computadora, la cual se presenta como un estándar moderno que reemplaza a la `BIOS` (Basic Input/Output System), siendo este último el firmware fundamental preinstalado en un chip de la placa base que inicia, prueba (`POST`) y configura el hardware (`CPU`, `RAM`, discos) al encender el `PC`. Se tiene que a diferencia de la `BIOS`, que está limitada al modo real de `16` bits, la `UEFI` puede ejecutarse en modos de mayor capacidad (`32` o `64` bits) y permite un arranque más flexible y seguro.
 
-Se utiliza como una interfaz entre el SO y el firmware de la plataforma. A diferencia de las interrupciones de BIOS, UEFI utiliza servicios de arranque (Boot Services) y servicios de tiempo de ejecución (Runtime Services) a los que se accede mediante tablas de punteros a funciones en C.
+Se utiliza como una interfaz entre el SO y el firmware de la plataforma. A diferencia de las interrupciones de `BIOS`, `UEFI` utiliza servicios de arranque (Boot Services) y servicios de tiempo de ejecución (Runtime Services) a los que se accede mediante tablas de punteros a funciones en `C`.
 
-Una función común que se puede llamar es GetVariable, que permite leer variables de configuración almacenadas en la memoria no volátil (NVRAM) del firmware.
+Una función común que se puede llamar es GetVariable, que permite leer variables de configuración almacenadas en la memoria no volátil (`NVRAM`) del firmware.
 
 
 
 ### 2.2- Bugs de UEFI explotables 
-Nótese que dada la definición presentada de la UEFI, se tiene que esta se ejecuta antes del sistema operativo, y por lo tanto puede ser un objetivo crítico para el malware que busque capitalizarse de los bugs y errores de seguridad presentados en la misma. Algunos de los casos conocidos son:
+Nótese que dada la definición presentada de la `UEFI`, se tiene que esta se ejecuta antes del sistema operativo, y por lo tanto puede ser un objetivo crítico para el malware que busque capitalizarse de los bugs y errores de seguridad presentados en la misma. Algunos de los casos conocidos son:
 
-* LoJax: Se trata de el primer malware de tipo Rootkit diseñado para infectar computadoras desde la UEFI detectado en condiciones reales. Este malware se infiltraba en la memoria Flash SPI de tal modo que es imposible su limpieza con métodos convencionales como la reinstalación del sistema operativo o el cambio del disco rígido. Es el primero descubierto que usa este modo de infección que hasta el momento se consideraba teórica. El malware fue descubierto por la compañía de seguridad ESET.
+* `LoJax`: Se trata de el primer malware de tipo `Rootkit` diseñado para infectar computadoras desde la `UEFI` detectado en condiciones reales. Este malware se infiltraba en la memoria Flash `SPI` de tal modo que es imposible su limpieza con métodos convencionales como la reinstalación del sistema operativo o el cambio del disco rígido. Es el primero descubierto que usa este modo de infección que hasta el momento se consideraba teórica. El malware fue descubierto por la compañía de seguridad `ESET`.
   
-* BlackLotus: Es un Bookit de UEFI diseñado específicamente para Windows que incorpora un Bypass integrado del Secure Boot y protección Ring0-Kernel para protegerse de cualquier intento de eliminación. Este permite explotar vulnerabilidades, tales como CVE-2022-21894, para ejecutar código no firmado durante el arranque.
+* `BlackLotus`: Es un Bookit de UEFI diseñado específicamente para Windows que incorpora un Bypass integrado del Secure Boot y protección Ring0-Kernel para protegerse de cualquier intento de eliminación. Este permite explotar vulnerabilidades, tales como `CVE-2022-21894`, para ejecutar código no firmado durante el arranque.
 
-* Vulnerabilidades del Buffer Overflow: Ocurre cuando un programa escribe más datos en un área de memoria (búfer) de los que puede albergar, sobrescribiendo memoria adyacente. Esto permite a atacantes corromper datos, provocar fallos del sistema o ejecutar código malicioso arbitrario, tomando el control del sistema.
+* `Vulnerabilidades del Buffer Overflow`: Ocurre cuando un programa escribe más datos en un área de memoria (búfer) de los que puede albergar, sobrescribiendo memoria adyacente. Esto permite a atacantes corromper datos, provocar fallos del sistema o ejecutar código malicioso arbitrario, tomando el control del sistema.
 
 
 
 ### 2.3- CSME e Intel MEBx
-El CSME (Converged Security and Management Engine) consiste de un subsistema embebido y un dispositivo PCIe (Peripheral Component Interconnect Express) integrado en los chipsets de Intel que esta diseñado para actuar como un controlador de seguridad y manejabilidad en el PCH (Plataform Controller Hub). Este funciona con su propio procesador, microkernel y memoria, permitiendo tareas de gestión remota y seguridad independientemente del estado del procesador principal o del sistema operativo.
+El `CSME` (Converged Security and Management Engine) consiste de un subsistema embebido y un dispositivo `PCIe` (Peripheral Component Interconnect Express) integrado en los chipsets de Intel que esta diseñado para actuar como un controlador de seguridad y manejabilidad en el `PCH` (Plataform Controller Hub). Este funciona con su propio procesador, microkernel y memoria, permitiendo tareas de gestión remota y seguridad independientemente del estado del procesador principal o del sistema operativo.
 
-Para configurar el CSME, Intel provee el Intel MEBx (Management Engine BIOS Extension) el cual es una interfaz de configuración a nivel de plataforma para el subsistema Intel Management Engine (ME) en sistemas Intel vPro. Permite activar/desactivar funciones como Intel AMT (Active Management Technology), generalmente presionando Ctrl+P, y configurar parámetros de red y seguridad antes de iniciar el sistema operativo.
+Para configurar el `CSME`, `Intel` provee el `Intel MEBx` (Management Engine `BIOS` Extension) el cual es una interfaz de configuración a nivel de plataforma para el subsistema Intel Management Engine (`ME`) en sistemas `Intel vPro`. Permite activar/desactivar funciones como `Intel AMT` (Active Management Technology), generalmente presionando `Ctrl+P`, y configurar parámetros de red y seguridad antes de iniciar el sistema operativo.
 
 
 ### 2.4- Coreboot
-Se tiene que el Coreboot (antes llamado LinuxBIOS) es un proyecto dirigido a reemplazar el firmware no libre de los BIOS propietarios, encontrados en la mayoría de los computadores, por un BIOS libre y ligero diseñado para realizar solamente el mínimo de tareas necesarias para cargar y correr un sistema operativo moderno de 32 bits o de 64 bits. coreboot es respaldado por la Free Software Foundation (FSF). Entre ellos se encuentran SeaBIOS, Grub o incluso el kernel de Linux. Algunas de sus ventajas principales pueden ser:
+Se tiene que el `Coreboot` (antes llamado `LinuxBIOS`) es un proyecto dirigido a reemplazar el firmware no libre de los `BIOS` propietarios, encontrados en la mayoría de los computadores, por un `BIOS` libre y ligero diseñado para realizar solamente el mínimo de tareas necesarias para cargar y correr un sistema operativo moderno de `32` o de `64` bits. coreboot es respaldado por la Free Software Foundation (`FSF`). Entre ellos se encuentran `SeaBIOS`, `Grub` o incluso el kernel de `Linux`. Algunas de sus ventajas principales pueden ser:
  * Velocidad: El tiempo de arranque es significativamente menor al eliminar procesos innecesarios del firmware comercial.
  * Seguridad: Al ser código abierto, puede ser auditado por la comunidad para detectar puertas traseras.
  * Personalización: Permite un control total sobre el proceso de arranque del hardware.
-Dadas estas ventajas, se tiene que la implementación del Coreboot es muy común en las Chromebooks de Google. También es utilizado por fabricantes enfocados en la privacidad y el hardware abierto como System76, Purism y Framework.
+Dadas estas ventajas, se tiene que la implementación del Coreboot es muy común en las Chromebooks de Google. También es utilizado por fabricantes enfocados en la privacidad y el hardware abierto como `System76`, `Purism` y `Framework.`
 
 
 
-## 3- Linker y GBD
+## 3- Linker y Hello World en Modo Real
+Un Linker (enlazador) o editor de enlaces es un programa informático que combina archivos intermedios de compilación de software, como archivos objeto y de biblioteca , en un único archivo ejecutable , como un programa o una biblioteca. Sus funciones principales son:
+* Resolución de símbolos: Si en un archivo se usa una función que está definida en otro, el linker busca dónde está y conecta el llamado con la definición.
+* Asignación de memoria: Decide en qué dirección de memoria se ubicará cada sección del código (código, datos, variables globales).
+* Relocalización: Ajusta las direcciones de memoria dentro del código para que coincidan con el lugar donde finalmente se cargará el programa.
+
+Para entender una mejor aplicación del Linker, se propone continuar con el escenario planteado por un usuario en [StackOverflow](https://stackoverflow.com/questions/59881880/what-memory-is-impacted-using-the-location-counter-in-linker-script) el cual se plantea tambien como parte de la consigna de este trabajo práctico. La idea que planteo este usuario, fue de imprimir un simple "Hello World" en Assembler mediante el uso del modo real de una computadora. Para ello utilizo el siguiente código en `Assembler`:
+
+```asm
+.code16
+    mov $msg, %si
+    mov $0x0e, %ah
+loop:
+    lodsb
+    or %al, %al
+    jz halt
+    int $0x10
+    jmp loop
+halt:
+    hlt
+msg:
+    .asciz "Hello World"
+```
+
+Luego, se propuso el siguiente código en Linker para unirlo en un ejecutable y pasarselo al disco de arranque:
+
+```ld
+SECTIONS
+{
+    /* The BIOS loads the code from the disk to this location.
+     * We must tell that to the linker so that it can properly
+     * calculate the addresses of symbols we might jump to.
+     */
+    . = 0x7c00;
+    .text :
+    {
+        __start = .;
+        *(.text)
+        /* Place the magic boot bytes at the end of the first 512 sector. */
+        . = 0x1FE;
+        SHORT(0xAA55)
+    }
+}
+```
+
+La dirección que vemos en el script de Linker, es la dirección de carga (`VMA` - Virtual Memory Address) la cual es igual a `0x7C00` siendo esta es la ubicación estándar en la memoria `RAM` donde la `BIOS` de un `PC` basado en `x86` carga el primer sector de arranque (`MBR` - Master Boot Record) de `512` bytes. Al encenderse, la `CPU` en modo real de `16` bits transfiere el control a esta dirección para iniciar el sistema operativo. es decir, le indica al linker que el código "cree" que está viviendo en esa dirección específica de la memoria RAM.
+
+El valor de `0x7C00` tiene origen del `IBM PC DOS` (The IBM Personal Computer Disk Operating System), siendo este un sistema operativo de disco (DOS) que dominó el mercado de los computadores personales entre 1985 y 1995, donde dado que la computadora base tenía solo `32` [KB] de memoria `RAM`, `IBM` tomo la decisión de que el sector de booteo debía cargarse cerca del final de esos primeros `32` [KB] de `RAM`, pero dejando espacio suficiente para que el propio sector de booteo pudiera trabajar y tener su propio "stack" (pila).
+
+Estas líneas en el Linker son fundamentales debido a que en los códigos en `Assembler`, las referencias a datos (como `mov $msg, %si`) se convierten en direcciones absolutas durante la edición de memoria (linking). Es decir, que de no incluir la línea `. = 0x7c00` en el archivo `link.ld` asume que el programa empieza en la posición `0x0000`de la memoria `RAM`. Se tiene entonces que cuando el código busque el mensaje, dado que la `BIOS` carga el código en `0x7C00`, el programa buscaría en el lugar equivocado y no funcionaria el código.
+
+
+
+
+
+
+Compare la salida de objdump con hd, verifique donde fue colocado el programa dentro de la imagen. 
+Grabar la imagen en un pendrive y probarla en una pc y subir una foto 
+¿Para que se utiliza la opción --oformat binary en el linker?
+
+
+
+
+## 4- Desafio Final
 
 
 
@@ -143,18 +206,17 @@ Dadas estas ventajas, se tiene que la implementación del Coreboot es muy común
 
 
 
-
-
-
-
-
-
-## Bibliografía
+## 5- Bibliografía
 * [Imagen Booteable](https://en.wikipedia.org/wiki/Boot_image)
 * [QEMU](https://es.wikipedia.org/wiki/QEMU)
+* [PNP_DETECTED_FATAL_ERROR](https://learn.microsoft.com/es-es/windows-hardware/drivers/debugger/bug-check-0xca--pnp-detected-fatal-error)
 * [LoJaX](https://es.wikipedia.org/wiki/LoJax)
 * [BlackLotus](https://github.com/ldpreload/BlackLotus)
 * [Buffer Overflow](https://www.cloudflare.com/es-es/learning/security/threats/buffer-overflow/)
 * [Intel CSME](https://www.intel.com/content/dam/www/public/us/en/security-advisory/documents/intel-csme-security-white-paper.pdf)
 * [Intel MEBx](https://en.wikipedia.org/wiki/Intel_Management_Engine)
 * [Coreboot](https://es.wikipedia.org/wiki/Coreboot)
+* [Linker](https://en.wikipedia.org/wiki/Linker_(computing))
+* [Caso de Estudio de Linker](https://stackoverflow.com/questions/59881880/what-memory-is-impacted-using-the-location-counter-in-linker-script)
+* [MBR](https://en.wikipedia.org/wiki/Master_boot_record)
+* [IBM PC DOS](https://es.wikipedia.org/wiki/IBM_PC_DOS)
