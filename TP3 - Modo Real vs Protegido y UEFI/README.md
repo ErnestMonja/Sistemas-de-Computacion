@@ -227,6 +227,7 @@ De esta forma, podemos hacer uso de las instrucciones `continue` y `si`, para ir
 
 
 ## 4- Desafio Final: Pasaje a Modo Protegido sin Macros
+### 4.1- Código Propuesto
 Como bien indica el título de esta sección, el objetivo de la misma consiste en crear un código en `Assembler` que nos permita pasar a modo protegido, sin la necesidad de utilizar macros. para realizar tal proceso se requiere que el procesador ejecute los siguientes 3 pasos fundamentales:
 * Definir la `GDT` (Global Descriptor Table): Se trata de una parte fundamental de la arquitectura `x86` de `Intel` que ayuda a gestionar cómo se accede a la memoria y cómo se protege. Introducida con el procesador `Intel 80286`, desempeña un papel clave en la definición de los segmentos de memoria y sus atributos: la dirección base, el tamaño y los privilegios de acceso, como la ejecutabilidad y la escritura.
 * Cargar la `GDT`: Usar la instrucción `LGDT`.
@@ -337,30 +338,29 @@ protected_mode:
 Para ensamblar este código, se propone utilizar las siguientes lineas de código
 
 ```bash
-as --32 boot.s -o boot.o
+as --32 boot.asm -o boot.o
 ld -m elf_i386 -Ttext 0x7c00 --oformat binary boot.o -o boot.bin
+qemu-system-i386 -drive format=raw,file=boot.bin
 ```
 
+Se observa entonces la siguiente salida al ejecutar este código:
 
+![Compilación](https://github.com/ErnestMonja/Sistemas-de-Computacion/blob/main/TP3%20-%20Modo%20Real%20vs%20Protegido%20y%20UEFI/Modo%20Protegido/Compilaci%C3%B3n.png)
 
+### 4.2- ¿Qué sucede si el segmento de datos es "Solo Lectura" e intentas escribir?
+Si se cambia el bit de acceso del descriptor de datos (específicamente el bit 1 del byte de acceso) de 1 (Read/Write) a 0 (Read-Only), se tiene que el hardware de la `CPU` detecta una violación de permisos al intentar ejecutar una instrucción `MOV` de escritura y por lo tanto se dispara una General Protection Fault (Excepción 13).
 
+En el teórico: Si no tienes un manejador de interrupciones (IDT) configurado, la CPU entrará en un "Triple Fault" y la computadora (o el emulador QEMU/Bochs) se reiniciará.
 
+### 4.3- ¿Con qué valor se cargan los registros de segmento en Modo Protegido y por qué?
+A diferencia del Modo Real, donde el registro contiene una dirección base segmentada (valor * 16), en Modo Protegido los registros (`CS`, `DS`, `SS`, etc.) se cargan con un Selector de Segmento. Esto se debe a que en este modo, los registros ya no apuntan a una dirección física directa, sino que actúan como un índice o puntero hacia la `GDT`. El valor cargado tiene esta estructura:
+* Bits 3-15 (Índice): Indica qué entrada de la GDT queremos usar (ej. el descriptor 1, el 2, etc.).
+* Bit 2 (`TI`): Indica si se usa la `GDT` (0) o la LDT (1).
+* Bits 0-1 (`RPL`): El nivel de privilegio solicitado (Ring 0 a Ring 3).
 
+si por ejemplo se carga el: `0x08` (binario `1000`), el índice es 1, lo que significa que se está seleccionando el segundo descriptor de la `GDT`.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+### 4.4- Verificación con GDB, se 
 
 
 ## 5- Bibliografía
