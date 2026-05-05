@@ -33,14 +33,18 @@ Antes del despligue en hardware real, usamos herramientas para verififcar la int
 - Ingeniería inversa: Ghidra 12.0, utilizado para la descompilación y análisis estǽtitco del binario generado
 - Inspección de Binarios: utilidades `file` y `readlf` para corroborar que el formato de salida fuera efectivamente una aplicación EFI y no un binario ELF de Linux  
 
+<img width="1024" height="768" alt="image" src="https://github.com/user-attachments/assets/27004ffe-c428-4207-839c-34f065c6a362" />
+
+
 ### Implementación del Código 
 
 El código utilizado para el archivo `aplicacion.c` es el siguiente: 
 
-`#include <efi.h>
-#include <efilib.h>
+```
+  #include <efi.h>
+  #include <efilib.h>
 
-EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
+  EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     InitializeLib(ImageHandle, SystemTable);
     Print(L"Iniciando analisis de seguridad...\n");
 
@@ -49,7 +53,8 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 
     Print(L"Breakpoint estatico alcanzado.\n");
     return EFI_SUCCESS;
-}`
+  }
+```
 
 Para asegurar que el binario pueda ser analizado mediante Ghidra, se utilizó una variable que define el breakpoint como un arreglo de datos 
 `unsigned char code[]`. Esto permite verificar la lógica de detección sin forzar una interrupción de hardware que el firmware podría no manejar 
@@ -125,6 +130,9 @@ Al ejecutar la aplicación, el sistema imprimió con éxito los mensajes program
 - "Breakpoint estatico alcanzado "
 
 Manejo de flujo: Implementamos la espera de teclado final para evitar que el firmware regresara al menú de booteo instantáneamente, permitiendo sacar una captura 
+
+<img width="1024" height="768" alt="image" src="https://github.com/user-attachments/assets/0f7af9f0-e90d-4736-9806-261d8bc81db3" />
+Ejecución en el hardware real 
 
 ### Conclusiones 
 Este laboratorio permitió integrar concepetos de bajo nivel, seguridad de firmware y desarrollo de sistemas embebidos 
