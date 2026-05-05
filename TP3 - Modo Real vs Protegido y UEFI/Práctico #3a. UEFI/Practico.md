@@ -21,17 +21,16 @@ Las pruebas físicas se realizaron sobre una estación de trabajo portátil con 
 Se utilizó la cadena de herramientas de GNU para la generación de binarios PE32+ (Portable Executable), formato requerido por el firmware UEFI
 
 - Compilador: `gcc`
-- Har
 - Librerías de Desarrollo: Se instaló el paquete `gnu-efi`, el cual proporciona `efi.h` y `efilib.h` para el manejo de protocolos de consola y
   los objetos de inicio necesarios para la interfaz con las tablas del sistema
-- Scripts de Elace: se utilizô el archivo `elf_x86_64_efi,lds` para definir la disposición de las secciones de memoria de la aplicación dentro del firmware
+- Scripts de Elace: se utilizó el archivo `elf_x86_64_efi.lds` para definir la disposición de las secciones de memoria de la aplicación dentro del firmware
 
 #### Herramientas de Análisis y Emulación 
-Antes del despligue en hardware real, usamos herramientas para verififcar la integridad del código: 
+Antes del despliegue en hardware real, usamos herramientas para verificar la integridad del código: 
 
 - Emulación: QEMU con soporte OVMF para simular un entorno UEFI puro sin riesgo de bloqueo del hardware del host
 - Ingeniería inversa: Ghidra 12.0, utilizado para la descompilación y análisis estǽtitco del binario generado
-- Inspección de Binarios: utilidades `file` y `readlf` para corroborar que el formato de salida fuera efectivamente una aplicación EFI y no un binario ELF de Linux  
+- Inspección de Binarios: utilidades `file` y `readelf` para corroborar que el formato de salida fuera efectivamente una aplicación EFI y no un binario ELF de Linux  
 
 <img width="1024" height="768" alt="image" src="https://github.com/user-attachments/assets/27004ffe-c428-4207-839c-34f065c6a362" />
 
@@ -41,19 +40,24 @@ Antes del despligue en hardware real, usamos herramientas para verififcar la int
 El código utilizado para el archivo `aplicacion.c` es el siguiente: 
 
 ```
-  #include <efi.h>
-  #include <efilib.h>
+#include <efi.h>
+#include <efilib.h>
 
-  EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
+EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     InitializeLib(ImageHandle, SystemTable);
-    Print(L"Iniciando analisis de seguridad...\n");
+    SystemTable->ConOut->OutputString(SystemTable->ConOut, 
+        L"Iniciando analisis de seguridad...\r\n");
 
-    // Inyección de un software breakpoint (INT3)
-    __asm__ __volatile__ ("int $3");
+    // Simulación de breakpoint estático (INT3)
+    unsigned char code[] = { 0xCC };
 
-    Print(L"Breakpoint estatico alcanzado.\n");
+    if (code[0] == 0xCC) {
+        SystemTable->ConOut->OutputString(SystemTable->ConOut, 
+            L"Breakpoint estatico alcanzado.\r\n");
+    }
+
     return EFI_SUCCESS;
-  }
+}
 ```
 
 Para asegurar que el binario pueda ser analizado mediante Ghidra, se utilizó una variable que define el breakpoint como un arreglo de datos 
@@ -68,7 +72,7 @@ En la imagen se ve la edición del archivo fuente `aplicacion.c` utilizando el e
 (`WaitForKey`) para permitir la lectura de los resultados antes del cierre de la aplicación. 
 
 ### Construcción y Análisis del Binario 
-  En estaetapa se realizó la transformación del código fuente en un ejecutable compatible con el firmware y se auditó su estructura mediante ingeniería inversa 
+  En esta etapa se realizó la transformación del código fuente en un ejecutable compatible con el firmware y se auditó su estructura mediante ingeniería inversa 
 
 #### Proceso de Compilación 
 Paso 1: Generación del código objeto 
@@ -91,12 +95,12 @@ Figura 2
 
 
 #### Verificacion de Formato 
-Antes del análisis estatico, se valido la integridad del archivo mediante el comando `file`, confirmando que se trata de un PE32+ executable (EFI application) x86_64. Tambien pudimos verificar la incompatibilidad con herramientas ELF estandar como `readlf`, confirmando la correcta conversion del formtato, como se observa en la siguiente imagen 
+Antes del análisis estatico, se valido la integridad del archivo mediante el comando `file`, confirmando que se trata de un PE32+ executable (EFI application) x86_64. Tambien pudimos verificar la incompatibilidad con herramientas ELF estandar como `readelf`, confirmando la correcta conversion del formtato, como se observa en la siguiente imagen 
 
 <img width="512" height="51" alt="image" src="https://github.com/user-attachments/assets/27ed794b-31fa-43ec-8ce4-3fb8ab19f809" />
 Figura 3: Validación del formato de salida, confirmando que se trata de un ejecutable PE32 para EFI 
 
-Comando `readlf` 
+Comando `readelf` 
 <img width="512" height="86" alt="image" src="https://github.com/user-attachments/assets/e6af0247-92d3-4cdb-b91e-5ee8ff7fc513" />
 Figura 3: El error evidencia el cambio exitoso de Magic Bytes 
 
@@ -113,7 +117,10 @@ Figura 4
 
 ### Configuración del Firmware y Seguridad 
 Para permitir la ejecución de nuestro código personalizado, fue necesario intervenir en la configuración de seguridad del firmware. Al tratarse de una aplicación no firmada por una Autoridad de Certificación reconocida, el protocolo de Secure Boot bloquearía el incio por defecto
-[imagen] 
+
+Para permitir la ejecución del binario no firmado, tuvimos que acceder a la configuración del firmware presionando F2 durante el arranque. 
+Dentro del menú Secure Boot, se deshabilitó la opción correspondiente. Esta modificación es necesaria porque nuestra aplicación no está firmada por una autoridad de Certificación reconocida. De dejarse activo, el firmware rechazaría la carga del binario con un error de violación de política de seguridad. Adicionalmente, se verificó que el modo de arranque estuviera configurado en UEFI y no en modo Legacy/CSM 
+
 
 ### Ejecución en Hardware Real y Resultados 
 Una vez configurada la BIOS y preparado el pendrive con el sistemade archivos FAT32, se procedio al arranque mediante el mení de dispositivos 
@@ -155,7 +162,7 @@ Como se observa en la imagen, al iniciar la Shell, el comando `map` se ejecuta a
 2. Observando las variables Boot#### y
 BootOrder, ¿cómo determina el Boot Manager la secuencia de arranque?
 
-En la imagen, se puede evidenciar que el sistema gestiona el arranque mediante variables globales. La variable `BootOrder` defina la prioridad, mientras que las variables ``Boot####` especifican la ubicación fñisica y lógica de cada cargador de arranque. Esta estructura permite que, al desconectar el pendrive utilizado en este laboratorio, el Boot Manager salte automaticamente a la siguiente opción válida sin intervención del usuario 
+En la imagen, se puede evidenciar que el sistema gestiona el arranque mediante variables globales. La variable `BootOrder` defina la prioridad, mientras que las variables ``Boot####` especifican la ubicación fisica y lógica de cada cargador de arranque. Esta estructura permite que, al desconectar el pendrive utilizado en este laboratorio, el Boot Manager salte automaticamente a la siguiente opción válida sin intervención del usuario 
 
 3.  En el mapa de memoria (memmap), existen
 regiones marcadas como RuntimeServicesCode. ¿Por qué estas áreas son un
@@ -172,5 +179,6 @@ En este laboratorio se utilizó `OutputString`a través de la `SystemTable` en l
 0xCC suele aparecer como -52. ¿A qué se debe este fenómeno y por qué
 importa en ciberseguridad?
 
-Como se analizó en la etapa de ingeniería inversa con Ghidra, los valores hexadecimales pueden representarse como enteros con signo en el pseudocodigo. La apracición del valor `-52` es el equivalente al opcode `0xCC. Esta distinción es clave para la ciberseguridad para identificar técnicas de detección basadas únicamente en valores positivos o hexadecimales estándar 
+El fenómeno ocurre porque Ghidra interpreta el byte `0xCC` como un entero con signo de 8 bits (signed char). En representación en complemento a dos, este significa `-52` en decimal. Esto no es un error del descompilador sino una decisión de tipado: si la variable `code[]` se declara como char en lugar de unsigned char, el compilador trata el valor como negativo. 
+En ciberseguridad esto es importante por dos razones. Primero, las herramientas de detección de malware y las reglas YARA que buscan el patrón `0xCC` en positivo o en hexadecimal podrían no correlacionar correctamente si el analista trabaja sobre pseudocódigo de Ghidra son considerar la representación con signo, generando falsos negativos. Segundo, un desarrollador de malware podría aprovechar esta ambiguedad construyendo breakpoints de forma que sean dificiles de identificar mediante búsqueda literal de bytes en herramientas de análisis estático que operen sobre representaciones de alto nivel en lugar del binario crudo 
 
